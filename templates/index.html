@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ZenMate AI - Mental Health Chatbot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #121212;
+            color: #fff;
+            padding: 20px;
+            transition: background 0.3s, color 0.3s;
+        }
+        h1 {
+            text-align: center;
+            color: #90caf9;
+        }
+        #chat-box {
+            width: 100%;
+            max-width: 700px;
+            margin: 20px auto;
+            background: #1e1e1e;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+            height: 400px;
+            overflow-y: auto;
+        }
+        .message {
+            margin: 10px 0;
+            padding: 10px 15px;
+            border-radius: 20px;
+            max-width: 80%;
+            clear: both;
+            word-wrap: break-word;
+        }
+        .user {
+            background: #64b5f6;
+            align-self: flex-end;
+            float: right;
+            text-align: right;
+            color: #000;
+        }
+        .bot {
+            background: #81c784;
+            float: left;
+            text-align: left;
+            color: #000;
+        }
+        #input-area {
+            max-width: 700px;
+            margin: 20px auto;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        textarea {
+            flex-grow: 1;
+            padding: 10px;
+            border-radius: 10px;
+            border: none;
+            font-size: 16px;
+            resize: none;
+            width: 100%;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 10px;
+            border: none;
+            background: #4fc3f7;
+            color: #000;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #29b6f6;
+        }
+        #darkToggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #333;
+            color: #fff;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <button id="darkToggle" onclick="toggleDarkMode()">☀️</button>
+    <h1>ZenMate AI - Your Mental Health Companion</h1>
+    <div id="chat-box"></div>
+
+    <div id="input-area">
+        <textarea id="message" rows="2" placeholder="😊 How are you feeling today? You can also speak..."></textarea>
+        <button onclick="sendMessage()">Send</button>
+        <button onclick="startVoice()">🎙️ Speak</button>
+    </div>
+
+    <script>
+        const chatBox = document.getElementById("chat-box");
+
+        function addMessage(text, sender) {
+            const message = document.createElement("div");
+            message.className = "message " + sender;
+            message.textContent = text;
+            chatBox.appendChild(message);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const messageInput = document.getElementById("message");
+            const text = messageInput.value.trim();
+            if (!text) return;
+
+            addMessage(text, "user");
+            messageInput.value = "";
+
+            const res = await fetch("/chat", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ message: text })
+            });
+
+            const data = await res.json();
+            addMessage(data.response, "bot");
+            speakText(data.response);
+        }
+
+        function startVoice() {
+            const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            recognition.lang = "en-US";
+            recognition.start();
+            recognition.onresult = function(event) {
+                document.getElementById("message").value = event.results[0][0].transcript;
+            }
+        }
+
+        function speakText(text) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            speechSynthesis.speak(utterance);
+        }
+
+        function toggleDarkMode() {
+            document.body.classList.toggle("light");
+            const btn = document.getElementById("darkToggle");
+            if (document.body.classList.contains("light")) {
+                document.body.style.background = "#f0f4f8";
+                document.body.style.color = "#000";
+                btn.textContent = "🌙";
+            } else {
+                document.body.style.background = "#121212";
+                document.body.style.color = "#fff";
+                btn.textContent = "☀️";
+            }
+        }
+    </script>
+</body>
+</html>
